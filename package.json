@@ -14,6 +14,9 @@
     "@tailwindcss/vite": "^4.1.14",
     "@walletconnect/core": "^2.22.4",
     "@walletconnect/utils": "^2.22.4",
+    "framer-motion": "^12.23.24",
+    "gsap": "^3.13.0",
+    "lottie-react": "^2.4.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "tailwindcss": "^4.1.14"
