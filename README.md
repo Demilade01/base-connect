@@ -9,18 +9,18 @@ A modern, lightweight dApp that enables seamless wallet connection to the Base b
 
 ## ✨ Features
 
-🔗 **Wallet Connection**: Connect via WalletConnect (QR code or mobile deep link)  
-💼 **Address Display**: Show connected wallet address in a clean, shortened format  
-💰 **Balance Display**: Real-time ETH balance on Base network  
-🌐 **Network Info**: Display current network (Base Mainnet/Sepolia)  
-🔒 **Secure Disconnect**: Safe wallet disconnection  
-🎨 **Smooth Animations**: Beautiful transitions powered by Framer Motion & GSAP  
-📱 **Mobile Optimized**: Perfect for mobile wallet connections  
+🔗 **Wallet Connection**: Connect via WalletConnect (QR code or mobile deep link)
+💼 **Address Display**: Show connected wallet address in a clean, shortened format
+💰 **Balance Display**: Real-time ETH balance on Base network
+🌐 **Network Info**: Display current network (Base Mainnet/Sepolia)
+🔒 **Secure Disconnect**: Safe wallet disconnection
+🎨 **Smooth Animations**: Beautiful transitions powered by Framer Motion & GSAP
+📱 **Mobile Optimized**: Perfect for mobile wallet connections
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
 - A crypto wallet (MetaMask, Coinbase Wallet, etc.)
 
