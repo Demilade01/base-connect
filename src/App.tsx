@@ -1,7 +1,15 @@
+
+import Layout from './components/Layout';
+import Hero from './components/Hero';
+import Features from './components/Features';
+
 function App() {
   return (
-   <h1 className='text-3xl font-bold underline'>Hello World</h1>
-  )
+    <Layout>
+      <Hero />
+      <Features />
+    </Layout>
+  );
 }
 
-export default App
+export default App;
