@@ -1,1 +1,62 @@
 @import "tailwindcss";
+
+/* BaseConnect Custom Styles */
+@theme {
+  --color-base-blue: #0052FF;
+  --color-base-light-blue: #3B99FC;
+  --color-base-dark-blue: #0039CC;
+  --color-success: #00D4AA;
+  --color-warning: #FF6B35;
+  --color-error: #FF3B30;
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #8E8E93;
+  --color-text-accent: #0052FF;
+  --color-neutral-50: #F8F9FA;
+  --color-neutral-100: #F1F3F4;
+  --color-neutral-200: #E8EAED;
+  --color-neutral-300: #DADCE0;
+  --color-neutral-400: #BDC1C6;
+  --color-neutral-500: #9AA0A6;
+  --color-neutral-600: #80868B;
+  --color-neutral-700: #5F6368;
+  --color-neutral-800: #3C4043;
+  --color-neutral-900: #1C1C1E;
+
+  --font-family-sans: 'Inter', system-ui, sans-serif;
+
+  --animate-fade-in: fadeIn 0.5s ease-in-out;
+  --animate-slide-up: slideUp 0.5s ease-out;
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-family-sans);
+  background: linear-gradient(135deg, var(--color-neutral-50) 0%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+/* Custom utility classes */
+.text-base-blue { color: var(--color-base-blue); }
+.bg-base-blue { background-color: var(--color-base-blue); }
+.bg-base-light-blue { background-color: var(--color-base-light-blue); }
+.bg-base-dark-blue { background-color: var(--color-base-dark-blue); }
+.text-success { color: var(--color-success); }
+.bg-success { background-color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.bg-warning { background-color: var(--color-warning); }
+.text-error { color: var(--color-error); }
+.bg-error { background-color: var(--color-error); }
+.text-text-primary { color: var(--color-text-primary); }
+.text-text-secondary { color: var(--color-text-secondary); }
+.text-text-accent { color: var(--color-text-accent); }
