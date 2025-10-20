@@ -7,6 +7,7 @@ const WalletInfo: React.FC = () => {
   const { address, chainId, balance, isLoading, error } = useWallet();
 
   const formatAddress = (addr: string) => {
+    if (!addr || addr.length < 10) return addr || 'Invalid address';
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
@@ -73,7 +74,7 @@ const WalletInfo: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-text-secondary mb-1">Wallet Address</p>
-              <p className="font-mono text-base-blue">{formatAddress(address)}</p>
+              <p className="font-mono text-base-blue">{address ? formatAddress(address) : 'Loading...'}</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -99,8 +100,8 @@ const WalletInfo: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-text-secondary mb-1">Network</p>
-              <p className={`font-semibold ${getNetworkColor(chainId!)}`}>
-                {getNetworkName(chainId!)}
+              <p className={`font-semibold ${chainId ? getNetworkColor(chainId) : 'text-error'}`}>
+                {chainId ? getNetworkName(chainId) : 'Unknown Network'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -108,7 +109,7 @@ const WalletInfo: React.FC = () => {
                 chainId === 8453 ? 'bg-success' : 'bg-warning'
               }`}></div>
               <span className="text-sm text-text-secondary">
-                Chain ID: {chainId}
+                Chain ID: {chainId || 'Unknown'}
               </span>
             </div>
           </div>

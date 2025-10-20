@@ -15,6 +15,7 @@ const Hero: React.FC = () => {
   };
 
   const formatAddress = (addr: string) => {
+    if (!addr || addr.length < 10) return addr || 'Invalid address';
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
@@ -79,7 +80,7 @@ const Hero: React.FC = () => {
                 Wallet Connected!
               </h3>
               <p className="text-text-secondary mb-4">
-                Address: <span className="font-mono text-base-blue">{formatAddress(address!)}</span>
+                Address: <span className="font-mono text-base-blue">{address ? formatAddress(address) : 'Loading...'}</span>
               </p>
               <button
                 onClick={handleConnect}
