@@ -1,7 +1,24 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useWallet } from '../contexts/WalletContext';
+import { Wallet, Loader2 } from 'lucide-react';
 
 const Hero: React.FC = () => {
+  const { isConnected, address, isLoading, connect, disconnect } = useWallet();
+
+  const handleConnect = () => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
+  };
+
+  const formatAddress = (addr: string) => {
+    if (!addr || addr.length < 10) return addr || 'Invalid address';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
   return (
     <motion.div
       className="text-center py-16"
@@ -51,12 +68,52 @@ const Hero: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
       >
-        <button className="bg-base-blue hover:bg-base-dark-blue text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
-          Connect Wallet
-        </button>
-        <p className="text-sm text-text-secondary mt-4">
-          Powered by WalletConnect
-        </p>
+        {isConnected ? (
+          <div className="space-y-4">
+            <div className="bg-success/10 border border-success/20 rounded-xl p-6 max-w-md mx-auto">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-success rounded-full flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
+                Wallet Connected!
+              </h3>
+              <p className="text-text-secondary mb-4">
+                Address: <span className="font-mono text-base-blue">{address ? formatAddress(address) : 'Loading...'}</span>
+              </p>
+              <button
+                onClick={handleConnect}
+                className="bg-error hover:bg-error/80 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300"
+              >
+                Disconnect
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <button
+              onClick={handleConnect}
+              disabled={isLoading}
+              className="bg-base-blue hover:bg-base-dark-blue disabled:bg-neutral-400 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-3 mx-auto"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-5 h-5" />
+                  Connect Wallet
+                </>
+              )}
+            </button>
+            <p className="text-sm text-text-secondary">
+              Powered by WalletConnect
+            </p>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
