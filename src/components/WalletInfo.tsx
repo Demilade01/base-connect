@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { gsap } from 'gsap';
 import { useWallet } from '../contexts/WalletContext';
 import { Wallet, Copy, ExternalLink, RefreshCw, CheckCircle, AlertCircle, Network, Coins } from 'lucide-react';
 
@@ -7,6 +8,7 @@ const WalletInfo: React.FC = () => {
   const { address, chainId, balance, isLoading, error } = useWallet();
   const [copied, setCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const formatAddress = (addr: string) => {
     if (!addr || addr.length < 10) return addr || 'Invalid address';
@@ -30,6 +32,57 @@ const WalletInfo: React.FC = () => {
     // Simulate refresh delay
     setTimeout(() => setRefreshing(false), 1000);
   };
+
+  // GSAP animations
+  useEffect(() => {
+    if (cardRef.current) {
+      // Entrance animation
+      gsap.fromTo(cardRef.current,
+        {
+          y: 50,
+          opacity: 0,
+          scale: 0.95
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.8,
+          ease: "power3.out",
+          delay: 0.5
+        }
+      );
+
+      // Hover effects
+      const handleMouseEnter = () => {
+        gsap.to(cardRef.current, {
+          y: -5,
+          scale: 1.02,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      };
+
+      const handleMouseLeave = () => {
+        gsap.to(cardRef.current, {
+          y: 0,
+          scale: 1,
+          duration: 0.3,
+          ease: "power2.out"
+        });
+      };
+
+      cardRef.current.addEventListener('mouseenter', handleMouseEnter);
+      cardRef.current.addEventListener('mouseleave', handleMouseLeave);
+
+      return () => {
+        if (cardRef.current) {
+          cardRef.current.removeEventListener('mouseenter', handleMouseEnter);
+          cardRef.current.removeEventListener('mouseleave', handleMouseLeave);
+        }
+      };
+    }
+  }, []);
 
   const openExplorer = () => {
     if (address && chainId) {
@@ -155,6 +208,7 @@ const WalletInfo: React.FC = () => {
 
   return (
     <motion.div
+      ref={cardRef}
       className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-neutral-200 max-w-2xl mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -187,7 +241,7 @@ const WalletInfo: React.FC = () => {
       >
         {/* Address */}
         <motion.div
-          className="bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-xl p-4 border border-neutral-200"
+          className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-4 border border-neutral-200 dark:border-neutral-600"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -246,7 +300,7 @@ const WalletInfo: React.FC = () => {
 
         {/* Network */}
         <motion.div
-          className="bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-xl p-4 border border-neutral-200"
+          className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-4 border border-neutral-200 dark:border-neutral-600"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -286,7 +340,7 @@ const WalletInfo: React.FC = () => {
 
         {/* Balance */}
         <motion.div
-          className="bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-xl p-4 border border-neutral-200"
+          className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-4 border border-neutral-200 dark:border-neutral-600"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
@@ -337,7 +391,7 @@ const WalletInfo: React.FC = () => {
         <AnimatePresence>
           {error && (
             <motion.div
-              className="bg-error/10 border border-error/20 rounded-xl p-4"
+              className="bg-error/10 dark:bg-error/20 border border-error/20 dark:border-error/30 rounded-xl p-4"
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
