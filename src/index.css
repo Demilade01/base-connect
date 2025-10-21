@@ -1,5 +1,24 @@
 @import "tailwindcss";
 
+/* Roboto Font Face Declarations */
+@font-face {
+  font-family: 'Roboto';
+  src: url('./assets/fonts/Roboto-VariableFont_wdth,wght.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('./assets/fonts/Roboto-Italic-VariableFont_wdth,wght.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-stretch: 75% 100%;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* BaseConnect Custom Styles */
 @theme {
   --color-base-blue: #0052FF;
@@ -22,7 +41,7 @@
   --color-neutral-800: #3C4043;
   --color-neutral-900: #1C1C1E;
 
-  --font-family-sans: 'Inter', system-ui, sans-serif;
+  --font-family-sans: 'Roboto', 'Inter', system-ui, sans-serif;
 
   --animate-fade-in: fadeIn 0.5s ease-in-out;
   --animate-slide-up: slideUp 0.5s ease-out;
@@ -60,3 +79,24 @@ body {
 .text-text-primary { color: var(--color-text-primary); }
 .text-text-secondary { color: var(--color-text-secondary); }
 .text-text-accent { color: var(--color-text-accent); }
+
+/* Roboto Font Utilities */
+.font-roboto { font-family: 'Roboto', sans-serif; }
+.font-roboto-light { font-family: 'Roboto', sans-serif; font-weight: 300; }
+.font-roboto-regular { font-family: 'Roboto', sans-serif; font-weight: 400; }
+.font-roboto-medium { font-family: 'Roboto', sans-serif; font-weight: 500; }
+.font-roboto-bold { font-family: 'Roboto', sans-serif; font-weight: 700; }
+.font-roboto-black { font-family: 'Roboto', sans-serif; font-weight: 900; }
+
+/* Typography improvements with Roboto */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+body, p, span, div {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}

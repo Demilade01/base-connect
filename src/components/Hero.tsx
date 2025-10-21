@@ -1,10 +1,10 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useWallet } from '../contexts/WalletContext';
-import { Wallet, Loader2 } from 'lucide-react';
+import { Wallet, Loader2, AlertCircle, ExternalLink } from 'lucide-react';
 
 const Hero: React.FC = () => {
-  const { isConnected, address, isLoading, connect, connectDirect, disconnect } = useWallet();
+  const { isConnected, address, isLoading, connect, disconnect, error } = useWallet();
 
   const handleConnect = () => {
     if (isConnected) {
@@ -21,7 +21,7 @@ const Hero: React.FC = () => {
 
   return (
     <motion.div
-      className="text-center py-16"
+      className="text-center py-8 sm:py-16"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -53,87 +53,132 @@ const Hero: React.FC = () => {
             <div className="w-8 h-1 bg-base-blue rounded-full"></div>
           </motion.div>
         </div>
-        <h1 className="text-5xl md:text-6xl font-bold text-text-primary mb-4">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-text-primary mb-4">
           BaseConnect
         </h1>
-        <p className="text-xl text-text-secondary max-w-2xl mx-auto">
+        <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto px-4">
           Connect your wallet to Base network with ease. View balances, manage assets,
           and explore the Base ecosystem seamlessly.
         </p>
       </motion.div>
 
-      {/* CTA Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
-      >
+      {/* Connection Status */}
+      <AnimatePresence mode="wait">
         {isConnected ? (
-          <div className="space-y-4">
-            <div className="bg-success/10 border border-success/20 rounded-xl p-6 max-w-md mx-auto">
-              <div className="flex items-center justify-center mb-4">
-                <div className="w-12 h-12 bg-success rounded-full flex items-center justify-center">
-                  <Wallet className="w-6 h-6 text-white" />
+          <motion.div
+            key="connected"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+            transition={{ duration: 0.5, type: "spring", stiffness: 300 }}
+            className="space-y-4"
+          >
+            <div className="bg-gradient-to-br from-success/10 to-success/5 border border-success/20 rounded-2xl p-8 max-w-md mx-auto shadow-lg">
+              <motion.div
+                className="flex items-center justify-center mb-6"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 400 }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-success to-success/80 rounded-full flex items-center justify-center shadow-lg">
+                  <Wallet className="w-8 h-8 text-white" />
                 </div>
-              </div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Wallet Connected!
-              </h3>
-              <p className="text-text-secondary mb-4">
-                Address: <span className="font-mono text-base-blue">{address ? formatAddress(address) : 'Loading...'}</span>
-              </p>
-              <button
-                onClick={handleConnect}
-                className="bg-error hover:bg-error/80 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300"
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
               >
-                Disconnect
-              </button>
+                <h3 className="text-xl font-bold text-text-primary mb-2 text-center">
+                  🎉 Wallet Connected!
+                </h3>
+                <p className="text-text-secondary mb-4 text-center">
+                  You're now connected to Base network
+                </p>
+                <div className="bg-white/50 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-text-secondary mb-1">Wallet Address</p>
+                  <p className="font-mono text-base-blue text-sm break-all">
+                    {address ? formatAddress(address) : 'Loading...'}
+                  </p>
+                </div>
+              </motion.div>
+
+              <motion.button
+                onClick={handleConnect}
+                className="w-full bg-error hover:bg-error/80 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Disconnect Wallet
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
+          <motion.div
+            key="disconnected"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="space-y-6"
+          >
+            {/* Error Display */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="bg-error/10 border border-error/20 rounded-xl p-4 max-w-md mx-auto"
+                >
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-error flex-shrink-0" />
+                    <p className="text-error text-sm">{error}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Connection Button */}
+            <div className="flex justify-center max-w-2xl mx-auto px-4">
+              <motion.button
                 onClick={handleConnect}
                 disabled={isLoading}
-                className="bg-base-blue hover:bg-base-dark-blue disabled:bg-neutral-400 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-3"
+                className="group relative bg-gradient-to-r from-base-blue to-base-dark-blue hover:from-base-dark-blue hover:to-base-blue disabled:from-neutral-400 disabled:to-neutral-400 text-white font-semibold py-3 sm:py-4 px-6 sm:px-8 rounded-xl text-base sm:text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center justify-center gap-3 overflow-hidden touch-manipulation"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
               >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 {isLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Connecting...
+                    <span>Connecting...</span>
                   </>
                 ) : (
                   <>
                     <Wallet className="w-5 h-5" />
-                    Connect via WalletConnect
+                    <span>Connect Wallet</span>
+                    <ExternalLink className="w-4 h-4 opacity-60" />
                   </>
                 )}
-              </button>
-              <button
-                onClick={connectDirect}
-                disabled={isLoading}
-                className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-400 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-3"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <Wallet className="w-5 h-5" />
-                    Connect Direct (MetaMask)
-                  </>
-                )}
-              </button>
+              </motion.button>
             </div>
-            <p className="text-sm text-text-secondary">
-              Try the direct connection if WalletConnect doesn't work
-            </p>
-          </div>
+
+            <motion.p
+              className="text-sm text-text-secondary text-center max-w-md mx-auto px-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              💡 Connect your wallet to get started with Base network
+            </motion.p>
+          </motion.div>
         )}
-      </motion.div>
+      </AnimatePresence>
     </motion.div>
   );
 };
