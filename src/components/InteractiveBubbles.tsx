@@ -16,7 +16,7 @@ const InteractiveBubbles: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isDarkMode } = useTheme();
   const bubblesRef = useRef<Bubble[]>([]);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -25,6 +25,7 @@ const InteractiveBubbles: React.FC = () => {
     const bubbles: Bubble[] = [];
 
     // Create different types of bubbles
+    // @ts-ignore
     const createBubble = (type: 'small' | 'medium' | 'large', index: number): Bubble => {
       const bubble = document.createElement('div');
       bubble.className = 'absolute rounded-full pointer-events-none';
