@@ -20,7 +20,7 @@ A modern, lightweight dApp that enables seamless wallet connection to the Base b
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20+
 - npm or yarn
 - A crypto wallet (MetaMask, Coinbase Wallet, etc.)
 

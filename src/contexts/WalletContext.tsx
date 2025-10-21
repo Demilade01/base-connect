@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import { createAppKit } from '@reown/appkit';
 import { defineChain } from '@reown/appkit/networks';
 
+// MetaMask types - using any for simplicity
+
 // Global flag to prevent multiple WalletConnect initializations
 let isWalletConnectInitialized = false;
 
@@ -57,6 +59,7 @@ interface WalletContextType {
   isLoading: boolean;
   error: string | null;
   connect: () => void;
+  connectDirect: () => void;
   disconnect: () => void;
   switchChain: (chainId: number) => void;
 }
@@ -120,10 +123,20 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const initializeAppKit = async () => {
       try {
+        // Check if project ID is available
+        const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'your_actual_project_id_here';
+
+        if (!projectId || projectId === 'your_project_id_here' || projectId === 'your_actual_project_id_here') {
+          setError("WalletConnect Project ID not configured. Please set VITE_WALLETCONNECT_PROJECT_ID in your .env file.");
+          console.error("WalletConnect Project ID not configured");
+          return;
+        }
+
         initializationRef.current = true; // Mark as initializing
         isWalletConnectInitialized = true; // Global flag
+
         const kit = createAppKit({
-          projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID!,
+          projectId: projectId,
           networks: [baseMainnet, baseSepolia],
           metadata: {
             name: "BaseConnect",
@@ -132,21 +145,27 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             icons: [`${window.location.origin}/vite.svg`],
           },
           features: {
-            analytics: true,
+            analytics: false, // Disable analytics to avoid payload issues
             email: false,
             socials: ['google', 'x', 'discord'],
           },
+          // Add explicit configuration for wallet detection
+          enableNetworkSwitch: true,
         });
 
         setAppKit(kit);
 
         // Listen for connection events
         kit.subscribeAccount((account: any) => {
-          if (account) {
+          console.log("Account subscription triggered:", account);
+          if (account && account.allAccounts && account.allAccounts.length > 0) {
+            const firstAccount = account.allAccounts[0];
             setIsConnected(true);
-            setAddress(account.address);
-            setChainId(account.chainId);
-            fetchBalance(account.address, account.chainId);
+            setAddress(firstAccount.address);
+            // Default to Base Mainnet for now - chainId will be updated when user switches
+            setChainId(8453);
+            setError(null); // Clear any previous errors
+            fetchBalance(firstAccount.address, 8453);
           } else {
             setIsConnected(false);
             setAddress(null);
@@ -155,9 +174,22 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         });
 
+        // Check if already connected on initialization
+        const currentAccount = kit.getAccount();
+        if (currentAccount && currentAccount.allAccounts && currentAccount.allAccounts.length > 0) {
+          const account = currentAccount.allAccounts[0];
+          console.log("Found existing connection:", account);
+          setIsConnected(true);
+          setAddress(account.address);
+          // For now, default to Base Mainnet (8453) - we'll get the actual chainId from the subscription
+          setChainId(8453);
+          setError(null);
+          fetchBalance(account.address, 8453);
+        }
+
       } catch (err) {
         console.error("Failed to initialize AppKit:", err);
-        setError("Failed to initialize wallet connection");
+        setError(`Failed to initialize wallet connection: ${err instanceof Error ? err.message : 'Unknown error'}`);
         // Reset flags on error to allow retry
         initializationRef.current = false;
         isWalletConnectInitialized = false;
@@ -185,12 +217,76 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         throw new Error("AppKit not initialized");
       }
 
+      // Check if MetaMask is available
+      if (typeof window !== 'undefined' && window.ethereum) {
+        console.log("MetaMask detected in browser:", window.ethereum);
+
+        // Try direct MetaMask connection as fallback
+        const ethereum = window.ethereum as any;
+        if (ethereum.isMetaMask) {
+          try {
+            console.log("Attempting direct MetaMask connection...");
+            const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            if (accounts && accounts.length > 0) {
+              console.log("Direct MetaMask connection successful:", accounts);
+              setIsConnected(true);
+              setAddress(accounts[0]);
+              setChainId(8453); // Default to Base Mainnet
+              setError(null);
+              fetchBalance(accounts[0], 8453);
+              return;
+            }
+          } catch (directError) {
+            console.log("Direct MetaMask connection failed, trying AppKit:", directError);
+          }
+        }
+      } else {
+        console.log("No MetaMask detected in browser");
+      }
+
       // Open AppKit modal
+      console.log("Opening AppKit modal...");
       await appKit.open();
 
     } catch (err) {
       console.error("Connection error:", err);
-      setError("Failed to connect wallet");
+      setError(`Failed to connect wallet: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const connectDirect = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (!window.ethereum) {
+        throw new Error("No wallet detected. Please install MetaMask.");
+      }
+
+      const ethereum = window.ethereum as any;
+      if (!ethereum.isMetaMask) {
+        throw new Error("MetaMask not detected. Please install MetaMask extension.");
+      }
+
+      console.log("Attempting direct MetaMask connection...");
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+
+      if (accounts && accounts.length > 0) {
+        console.log("Direct MetaMask connection successful:", accounts);
+        setIsConnected(true);
+        setAddress(accounts[0]);
+        setChainId(8453); // Default to Base Mainnet
+        setError(null);
+        fetchBalance(accounts[0], 8453);
+      } else {
+        throw new Error("No accounts found");
+      }
+
+    } catch (err) {
+      console.error("Direct connection error:", err);
+      setError(`Failed to connect directly: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -233,6 +329,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     isLoading,
     error,
     connect,
+    connectDirect,
     disconnect,
     switchChain,
   };
