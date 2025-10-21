@@ -1,26 +1,18 @@
 @import "tailwindcss";
 
-/* Roboto Font Face Declarations */
+/* Satoshi Font Face Declarations */
 @font-face {
-  font-family: 'Roboto';
-  src: url('./assets/fonts/Roboto-VariableFont_wdth,wght.ttf') format('truetype-variations');
-  font-weight: 100 900;
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-Variable.ttf') format('truetype-variations');
+  font-weight: 200 900;
   font-stretch: 75% 100%;
   font-style: normal;
   font-display: swap;
 }
 
-@font-face {
-  font-family: 'Roboto';
-  src: url('./assets/fonts/Roboto-Italic-VariableFont_wdth,wght.ttf') format('truetype-variations');
-  font-weight: 100 900;
-  font-stretch: 75% 100%;
-  font-style: italic;
-  font-display: swap;
-}
-
 /* BaseConnect Custom Styles */
 @theme {
+  /* Light mode colors */
   --color-base-blue: #0052FF;
   --color-base-light-blue: #3B99FC;
   --color-base-dark-blue: #0039CC;
@@ -41,7 +33,17 @@
   --color-neutral-800: #3C4043;
   --color-neutral-900: #1C1C1E;
 
-  --font-family-sans: 'Roboto', 'Inter', system-ui, sans-serif;
+  /* Dark mode colors */
+  --color-dark-bg-primary: #0A0A0A;
+  --color-dark-bg-secondary: #1A1A1A;
+  --color-dark-bg-tertiary: #2A2A2A;
+  --color-dark-text-primary: #FFFFFF;
+  --color-dark-text-secondary: #A1A1A6;
+  --color-dark-text-tertiary: #8E8E93;
+  --color-dark-border: #3A3A3C;
+  --color-dark-border-light: #48484A;
+
+  --font-family-sans: 'Satoshi', 'Inter', system-ui, sans-serif;
 
   --animate-fade-in: fadeIn 0.5s ease-in-out;
   --animate-slide-up: slideUp 0.5s ease-out;
@@ -58,12 +60,15 @@
   100% { transform: translateY(0); opacity: 1; }
 }
 
-/* Base styles */
+/* Base styles - Let Layout component handle background */
 body {
   font-family: var(--font-family-sans);
-  background: linear-gradient(135deg, var(--color-neutral-50) 0%, #ffffff 100%);
   min-height: 100vh;
+  /* transition: background 0.3s ease, color 0.3s ease; */
+  /* color: #1C1C1E; */
 }
+
+/* Dark mode text color */
 
 /* Custom utility classes */
 .text-base-blue { color: var(--color-base-blue); }
@@ -80,23 +85,52 @@ body {
 .text-text-secondary { color: var(--color-text-secondary); }
 .text-text-accent { color: var(--color-text-accent); }
 
-/* Roboto Font Utilities */
-.font-roboto { font-family: 'Roboto', sans-serif; }
-.font-roboto-light { font-family: 'Roboto', sans-serif; font-weight: 300; }
-.font-roboto-regular { font-family: 'Roboto', sans-serif; font-weight: 400; }
-.font-roboto-medium { font-family: 'Roboto', sans-serif; font-weight: 500; }
-.font-roboto-bold { font-family: 'Roboto', sans-serif; font-weight: 700; }
-.font-roboto-black { font-family: 'Roboto', sans-serif; font-weight: 900; }
+/* Satoshi Font Utilities */
+.font-satoshi { font-family: 'Satoshi', sans-serif; }
+.font-satoshi-light { font-family: 'Satoshi', sans-serif; font-weight: 300; }
+.font-satoshi-regular { font-family: 'Satoshi', sans-serif; font-weight: 400; }
+.font-satoshi-medium { font-family: 'Satoshi', sans-serif; font-weight: 500; }
+.font-satoshi-bold { font-family: 'Satoshi', sans-serif; font-weight: 700; }
+.font-satoshi-black { font-family: 'Satoshi', sans-serif; font-weight: 900; }
 
-/* Typography improvements with Roboto */
+/* Typography improvements with Satoshi */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Satoshi', sans-serif;
   font-weight: 600;
   letter-spacing: -0.025em;
 }
 
 body, p, span, div {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Satoshi', sans-serif;
   font-weight: 400;
   letter-spacing: 0.01em;
+}
+
+/* Dark mode utility classes */
+.dark .bg-white {
+  background-color: #1a1a1a;
+}
+
+.dark .text-text-primary {
+  color: #ffffff;
+}
+
+.dark .text-text-secondary {
+  color: #a1a1a6;
+}
+
+.dark .border-neutral-200 {
+  border-color: #3a3a3c;
+}
+
+.dark .bg-neutral-50 {
+  background-color: #2a2a2a;
+}
+
+.dark .bg-neutral-100 {
+  background-color: #2a2a2a;
+}
+
+.dark .hover\:bg-neutral-200:hover {
+  background-color: #3a3a3c;
 }
