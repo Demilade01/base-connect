@@ -4,7 +4,7 @@ import { useWallet } from '../contexts/WalletContext';
 import { Wallet, Loader2 } from 'lucide-react';
 
 const Hero: React.FC = () => {
-  const { isConnected, address, isLoading, connect, disconnect } = useWallet();
+  const { isConnected, address, isLoading, connect, connectDirect, disconnect } = useWallet();
 
   const handleConnect = () => {
     if (isConnected) {
@@ -92,25 +92,44 @@ const Hero: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <button
-              onClick={handleConnect}
-              disabled={isLoading}
-              className="bg-base-blue hover:bg-base-dark-blue disabled:bg-neutral-400 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-3 mx-auto"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <Wallet className="w-5 h-5" />
-                  Connect Wallet
-                </>
-              )}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={handleConnect}
+                disabled={isLoading}
+                className="bg-base-blue hover:bg-base-dark-blue disabled:bg-neutral-400 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-3"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-5 h-5" />
+                    Connect via WalletConnect
+                  </>
+                )}
+              </button>
+              <button
+                onClick={connectDirect}
+                disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700 disabled:bg-neutral-400 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-xl disabled:shadow-none flex items-center gap-3"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="w-5 h-5" />
+                    Connect Direct (MetaMask)
+                  </>
+                )}
+              </button>
+            </div>
             <p className="text-sm text-text-secondary">
-              Powered by WalletConnect
+              Try the direct connection if WalletConnect doesn't work
             </p>
           </div>
         )}
