@@ -34,6 +34,7 @@ const InteractiveBubbles: React.FC = () => {
       let opacity: number;
 
       switch (type) {
+        
         case 'small':
           size = 15 + Math.random() * 10; // 15-25px
           opacity = 0.3 + Math.random() * 0.4; // 0.3-0.7
