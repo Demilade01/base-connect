@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
 import { Button, Card, Grid, Spacer, Text, Snippet, Tag } from '@geist-ui/core';
-import { useAccount, useBalance, useChainId } from 'wagmi';
+import { useAccount, useBalance, useChainId, useGasPrice } from 'wagmi';
 import {
   Wallet,
   Copy,
@@ -12,8 +12,10 @@ import {
   AlertCircle,
   Network,
   Coins,
+  Flame,
+  Activity,
 } from 'lucide-react';
-import { formatEther } from 'viem';
+import { formatEther, formatGwei } from 'viem';
 
 const ActionButton = Button as React.ComponentType<any>;
 
@@ -30,6 +32,14 @@ const WalletInfo: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [recentTxs, setRecentTxs] = useState<any[]>([]);
+  const [txLoading, setTxLoading] = useState(false);
+  const [txError, setTxError] = useState<string | null>(null);
+  const basescanApiKey = import.meta.env.VITE_BASESCAN_API_KEY;
+  const { data: gasPriceData, isLoading: gasLoading } = useGasPrice({
+    chainId,
+    query: { enabled: Boolean(chainId) },
+  });
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -80,6 +90,74 @@ const WalletInfo: React.FC = () => {
         return 'Unknown Network';
     }
   };
+
+  const explorerBaseUrl =
+    chainId === 8453 ? 'https://basescan.org' : 'https://sepolia.basescan.org';
+
+  useEffect(() => {
+    if (!address || !chainId) {
+      setRecentTxs([]);
+      return;
+    }
+    if (!basescanApiKey) {
+      setTxError('Add VITE_BASESCAN_API_KEY to show recent transactions.');
+      setRecentTxs([]);
+      return;
+    }
+    setTxError(null);
+    setTxLoading(true);
+    const controller = new AbortController();
+    const fetchTxs = async () => {
+      const baseUrl =
+        chainId === 8453
+          ? 'https://api.basescan.org/api'
+          : 'https://api-sepolia.basescan.org/api';
+      const params = new URLSearchParams({
+        module: 'account',
+        action: 'txlist',
+        address,
+        sort: 'desc',
+        page: '1',
+        offset: '5',
+        apikey: basescanApiKey,
+      });
+      try {
+        const response = await fetch(`${baseUrl}?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (data.status === '1' && Array.isArray(data.result)) {
+          setRecentTxs(data.result.slice(0, 5));
+          setTxError(null);
+        } else {
+          setRecentTxs([]);
+          setTxError(data.message || 'No recent transactions found.');
+        }
+      } catch (error) {
+        if ((error as DOMException).name !== 'AbortError') {
+          setTxError('Failed to load recent transactions.');
+        }
+      } finally {
+        setTxLoading(false);
+      }
+    };
+    fetchTxs();
+    return () => controller.abort();
+  }, [address, chainId, basescanApiKey]);
+
+  const formatTimestamp = (timestamp: string) =>
+    new Date(Number(timestamp) * 1000).toLocaleString();
+
+  const formatTxValue = (value: string) => {
+    try {
+      return `${Number(formatEther(BigInt(value))).toFixed(4)} ETH`;
+    } catch {
+      return '0 ETH';
+    }
+  };
+
+  const shortHash = (hash: string) => `${hash.slice(0, 6)}...${hash.slice(-4)}`;
+
 
   const balanceDisplay = data ? `${Number(formatEther(data.value)).toFixed(4)} ${data.symbol}` : '--';
   const loadingSkeleton = status === 'connecting' || (isLoading && !address);
@@ -239,6 +317,74 @@ const WalletInfo: React.FC = () => {
                     Refresh
                   </ActionButton>
                 </div>
+              </div>
+            </Grid>
+            <Grid xs={24} md={12}>
+              <div className="w-full bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-700">
+                <Text small type="secondary" className="flex items-center gap-2 mb-1">
+                  <Flame className="w-4 h-4" />
+                  Gas Price
+                </Text>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <Text h3 className="mb-0">
+                      {gasLoading || !gasPriceData
+                        ? '—'
+                        : `${Number(formatGwei(gasPriceData)).toFixed(2)} Gwei`}
+                    </Text>
+                    <Text small type="secondary">Live from Base RPC</Text>
+                  </div>
+                  <Tag invert type="secondary">
+                    {chainId === 8453 ? 'Base Mainnet' : 'Base Sepolia'}
+                  </Tag>
+                </div>
+              </div>
+            </Grid>
+            <Grid xs={24}>
+              <div className="w-full bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-700">
+                <Text small type="secondary" className="flex items-center gap-2 mb-3">
+                  <Activity className="w-4 h-4" />
+                  Recent Transactions
+                </Text>
+                {!basescanApiKey ? (
+                  <Text small type="secondary">
+                    Add <code>VITE_BASESCAN_API_KEY</code> to enable activity previews.
+                  </Text>
+                ) : txLoading ? (
+                  <Text small type="secondary">Fetching latest activity…</Text>
+                ) : txError ? (
+                  <Text small type="error">{txError}</Text>
+                ) : recentTxs.length === 0 ? (
+                  <Text small type="secondary">No transactions found for this wallet.</Text>
+                ) : (
+                  <div className="space-y-3">
+                    {recentTxs.map((tx) => (
+                      <div
+                        key={tx.hash}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between bg-white/60 dark:bg-neutral-900/40 rounded-xl p-3 gap-3"
+                      >
+                        <div>
+                          <Text small className="font-mono">
+                            {shortHash(tx.hash)}
+                          </Text>
+                          <Text small type="secondary">{formatTimestamp(tx.timeStamp)}</Text>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Text small className="font-semibold">{formatTxValue(tx.value)}</Text>
+                          <ActionButton
+                            auto
+                            ghost
+                            scale={0.8}
+                            icon={<ExternalLink size={14} />}
+                            onClick={() => window.open(`${explorerBaseUrl}/tx/${tx.hash}`, '_blank')}
+                          >
+                            View
+                          </ActionButton>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Grid>
           </Grid.Container>
