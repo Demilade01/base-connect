@@ -1,99 +1,76 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
-import { useWallet } from '../contexts/WalletContext';
-import { Wallet, Copy, ExternalLink, RefreshCw, CheckCircle, AlertCircle, Network, Coins } from 'lucide-react';
+import { Button, Card, Grid, Spacer, Text, Snippet, Tag } from '@geist-ui/core';
+import { useAccount, useBalance, useChainId } from 'wagmi';
+import {
+  Wallet,
+  Copy,
+  ExternalLink,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  Network,
+  Coins,
+} from 'lucide-react';
+import { formatEther } from 'viem';
+
+const ActionButton = Button as React.ComponentType<any>;
 
 const WalletInfo: React.FC = () => {
-  const { address, chainId, balance, isLoading, error } = useWallet();
+  const { address, status } = useAccount();
+  const chainId = useChainId();
+  const { data, refetch, isFetching, isLoading, error } = useBalance({
+    address,
+    query: {
+      enabled: Boolean(address),
+      refetchInterval: 30_000,
+    },
+  });
   const [copied, setCopied] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const formatAddress = (addr: string) => {
-    if (!addr || addr.length < 10) return addr || 'Invalid address';
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    gsap.fromTo(
+      cardRef.current,
+      { y: 50, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out', delay: 0.3 }
+    );
+  }, []);
 
   const copyAddress = async () => {
-    if (address) {
-      try {
-        await navigator.clipboard.writeText(address);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
-        console.error('Failed to copy address:', err);
-      }
+    if (!address) return;
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy address:', err);
     }
   };
 
   const refreshBalance = async () => {
     setRefreshing(true);
-    // Simulate refresh delay
-    setTimeout(() => setRefreshing(false), 1000);
-  };
-
-  // GSAP animations
-  useEffect(() => {
-    if (cardRef.current) {
-      // Entrance animation
-      gsap.fromTo(cardRef.current,
-        {
-          y: 50,
-          opacity: 0,
-          scale: 0.95
-        },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          ease: "power3.out",
-          delay: 0.5
-        }
-      );
-
-      // Hover effects
-      const handleMouseEnter = () => {
-        gsap.to(cardRef.current, {
-          y: -5,
-          scale: 1.02,
-          duration: 0.3,
-          ease: "power2.out"
-        });
-      };
-
-      const handleMouseLeave = () => {
-        gsap.to(cardRef.current, {
-          y: 0,
-          scale: 1,
-          duration: 0.3,
-          ease: "power2.out"
-        });
-      };
-
-      cardRef.current.addEventListener('mouseenter', handleMouseEnter);
-      cardRef.current.addEventListener('mouseleave', handleMouseLeave);
-
-      return () => {
-        if (cardRef.current) {
-          cardRef.current.removeEventListener('mouseenter', handleMouseEnter);
-          cardRef.current.removeEventListener('mouseleave', handleMouseLeave);
-        }
-      };
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
     }
-  }, []);
+  };
 
   const openExplorer = () => {
-    if (address && chainId) {
-      const explorerUrl = chainId === 8453
+    if (!address || !chainId) return;
+    const explorerUrl =
+      chainId === 8453
         ? `https://basescan.org/address/${address}`
         : `https://sepolia.basescan.org/address/${address}`;
-      window.open(explorerUrl, '_blank');
-    }
+    window.open(explorerUrl, '_blank');
   };
 
-  const getNetworkName = (chainId: number) => {
+  const getNetworkName = () => {
     switch (chainId) {
       case 8453:
         return 'Base Mainnet';
@@ -104,104 +81,63 @@ const WalletInfo: React.FC = () => {
     }
   };
 
-  const getNetworkColor = (chainId: number) => {
-    switch (chainId) {
-      case 8453:
-        return 'text-success';
-      case 84532:
-        return 'text-warning';
-      default:
-        return 'text-error';
-    }
-  };
+  const balanceDisplay = data ? `${Number(formatEther(data.value)).toFixed(4)} ${data.symbol}` : '--';
+  const loadingSkeleton = status === 'connecting' || (isLoading && !address);
+  const balanceError = error instanceof Error ? error.message : null;
 
-  // Skeleton loading component
-  const SkeletonCard = () => (
-    <motion.div
-      className="bg-white rounded-2xl p-6 shadow-lg border border-neutral-200 max-w-2xl mx-auto"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
-      <div className="animate-pulse">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 bg-neutral-200 rounded-full"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-neutral-200 rounded w-32"></div>
-            <div className="h-3 bg-neutral-200 rounded w-24"></div>
+  if (loadingSkeleton) {
+    return (
+      <motion.div
+        className="bg-white rounded-2xl p-6 shadow-lg border border-neutral-200 max-w-3xl mx-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-neutral-200 rounded w-1/3" />
+          <div className="h-3 bg-neutral-200 rounded w-2/3" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="h-24 bg-neutral-100 rounded-xl" />
+            ))}
           </div>
         </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-neutral-50 rounded-xl p-4">
-              <div className="h-3 bg-neutral-200 rounded w-20 mb-2"></div>
-              <div className="h-4 bg-neutral-200 rounded w-32"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-
-  // Show loading skeleton
-  if (isLoading && !address) {
-    return <SkeletonCard />;
+      </motion.div>
+    );
   }
 
-  // Show connection prompt when no wallet is connected
   if (!address) {
     return (
       <motion.div
-        className="bg-white rounded-2xl p-6 shadow-lg border border-neutral-200 max-w-2xl mx-auto"
+        className="bg-white rounded-2xl p-6 shadow-lg border border-neutral-200 max-w-3xl mx-auto"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
       >
-        <div className="flex items-center gap-4 mb-6">
-          <motion.div
-            className="w-12 h-12 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-full flex items-center justify-center"
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Wallet className="w-6 h-6 text-neutral-400" />
-          </motion.div>
-          <div>
-            <h3 className="text-xl font-semibold text-text-primary">Connect Your Wallet</h3>
-            <p className="text-text-secondary">Connect to Base network to get started</p>
+        <div className="flex items-center gap-4 mb-4">
+          <Wallet className="w-10 h-10 text-base-blue" />
+          <div className="text-left">
+            <Text h4 className="mb-0">
+              Connect your wallet to continue
+            </Text>
+            <Text small type="secondary">
+              Your address, network, and balances will appear here.
+            </Text>
           </div>
         </div>
-
-        <div className="text-center py-8">
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-6"
-          >
-            <div className="w-16 h-16 bg-gradient-to-br from-base-blue/10 to-base-blue/5 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Wallet className="w-8 h-8 text-base-blue" />
-            </div>
-          </motion.div>
-
-          <p className="text-text-secondary mb-4">
-            No wallet detected. Please connect your wallet to continue.
-          </p>
-
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                className="bg-error/10 border border-error/20 rounded-xl p-4 mb-4"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-error flex-shrink-0" />
-                  <p className="text-error text-sm">{error}</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <AnimatePresence>
+          {balanceError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="bg-error/10 border border-error/20 rounded-xl p-4 flex items-center gap-3"
+            >
+              <AlertCircle className="w-5 h-5 text-error" />
+              <Text small type="error">
+                {balanceError}
+              </Text>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     );
   }
@@ -209,202 +145,122 @@ const WalletInfo: React.FC = () => {
   return (
     <motion.div
       ref={cardRef}
-      className="bg-white rounded-2xl p-4 sm:p-6 shadow-lg border border-neutral-200 max-w-2xl mx-auto"
+      className="max-w-4xl mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
     >
-      <motion.div
-        className="flex items-center gap-4 mb-6"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <motion.div
-          className="w-12 h-12 bg-gradient-to-br from-base-blue to-base-dark-blue rounded-full flex items-center justify-center shadow-lg"
-          animate={{ rotate: [0, 5, -5, 0] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        >
-          <Wallet className="w-6 h-6 text-white" />
-        </motion.div>
-        <div>
-          <h3 className="text-xl font-semibold text-text-primary">Wallet Connected</h3>
-          <p className="text-text-secondary">Your Base network wallet</p>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="space-y-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-      >
-        {/* Address */}
-        <motion.div
-          className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-4 border border-neutral-200 dark:border-neutral-600"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-text-secondary mb-1 flex items-center gap-2">
-                <Wallet className="w-4 h-4" />
-                Wallet Address
-              </p>
-              <p className="font-mono text-base-blue text-xs sm:text-sm break-all">{address ? formatAddress(address) : 'Loading...'}</p>
+      <Card shadow width="100%">
+        <Card.Content>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-base-blue to-base-dark-blue rounded-full flex items-center justify-center shadow-lg">
+              <Wallet className="w-6 h-6 text-white" />
             </div>
-            <div className="flex gap-2">
-              <motion.button
-                onClick={copyAddress}
-                className="p-2 hover:bg-neutral-200 rounded-lg transition-colors relative touch-manipulation"
-                title="Copy address"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <AnimatePresence mode="wait">
-                  {copied ? (
-                    <motion.div
-                      key="check"
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      exit={{ scale: 0, rotate: 180 }}
-                    >
-                      <CheckCircle className="w-4 h-4 text-success" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="copy"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                    >
-                      <Copy className="w-4 h-4 text-text-secondary" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-              <motion.button
-                onClick={openExplorer}
-                className="p-2 hover:bg-neutral-200 rounded-lg transition-colors touch-manipulation"
-                title="View on explorer"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <ExternalLink className="w-4 h-4 text-text-secondary" />
-              </motion.button>
+            <div className="text-left">
+              <Text h3 className="mb-0">
+                Wallet Overview
+              </Text>
+              <Text small type="secondary">
+                Everything you need to know about your Base session.
+              </Text>
             </div>
           </div>
-        </motion.div>
 
-        {/* Network */}
-        <motion.div
-          className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-4 border border-neutral-200 dark:border-neutral-600"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-text-secondary mb-1 flex items-center gap-2">
-                <Network className="w-4 h-4" />
-                Network
-              </p>
-              <p className={`font-semibold ${chainId ? getNetworkColor(chainId) : 'text-error'}`}>
-                {chainId ? getNetworkName(chainId) : 'Unknown Network'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
+          <Grid.Container gap={2}>
+            <Grid xs={24} md={12}>
+              <div className="w-full bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-700">
+                <Text small type="secondary" className="flex items-center gap-2 mb-1">
+                  <Wallet className="w-4 h-4" />
+                  Wallet Address
+                </Text>
+            <Snippet symbol="" width="100%" className="mb-3" text={address ?? ''}>
+                  {address}
+                </Snippet>
+                <div className="flex gap-2">
+                  <ActionButton
+                    auto
+                    scale={0.8}
+                    onClick={copyAddress}
+                    icon={copied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                  >
+                    {copied ? 'Copied' : 'Copy'}
+                  </ActionButton>
+                  <ActionButton
+                    auto
+                    scale={0.8}
+                    icon={<ExternalLink size={16} />}
+                    onClick={openExplorer}
+                  >
+                    Explorer
+                  </ActionButton>
+                </div>
+              </div>
+            </Grid>
+
+            <Grid xs={24} md={12}>
+              <div className="w-full bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-700">
+                <Text small type="secondary" className="flex items-center gap-2 mb-1">
+                  <Network className="w-4 h-4" />
+                  Network
+                </Text>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Text className="font-semibold mb-1">{getNetworkName()}</Text>
+                    <Tag type={chainId === 8453 ? 'success' : 'warning'} invert>
+                      Chain ID: {chainId ?? '—'}
+                    </Tag>
+                  </div>
+                </div>
+              </div>
+            </Grid>
+
+            <Grid xs={24} md={12}>
+              <div className="w-full bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 p-4 rounded-2xl border border-neutral-200 dark:border-neutral-700">
+                <Text small type="secondary" className="flex items-center gap-2 mb-1">
+                  <Coins className="w-4 h-4" />
+                  Balance
+                </Text>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Text h3 className="mb-0">
+                      {balanceDisplay}
+                    </Text>
+                    <Text small type="secondary">
+                      Updated automatically every 30 seconds
+                    </Text>
+                  </div>
+                  <ActionButton
+                    auto
+                    scale={0.8}
+                    icon={<RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />}
+                    loading={refreshing || isFetching}
+                    onClick={refreshBalance}
+                    type="secondary"
+                  >
+                    Refresh
+                  </ActionButton>
+                </div>
+              </div>
+            </Grid>
+          </Grid.Container>
+
+          <Spacer h={0.5} />
+          <AnimatePresence>
+            {balanceError && (
               <motion.div
-                className={`w-3 h-3 rounded-full ${
-                  chainId === 8453 ? 'bg-success' : 'bg-warning'
-                }`}
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [1, 0.7, 1]
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3
-                }}
-              ></motion.div>
-              <span className="text-sm text-text-secondary">
-                Chain ID: {chainId || 'Unknown'}
-              </span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Balance */}
-        <motion.div
-          className="bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-700 rounded-xl p-4 border border-neutral-200 dark:border-neutral-600"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-text-secondary mb-1 flex items-center gap-2">
-                <Coins className="w-4 h-4" />
-                ETH Balance
-              </p>
-              <div className="flex items-center gap-2">
-                {isLoading ? (
-                  <motion.div
-                    className="flex items-center gap-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <RefreshCw className="w-4 h-4 animate-spin text-base-blue" />
-                    <span className="text-base-blue">Loading...</span>
-                  </motion.div>
-                ) : (
-                  <motion.p
-                    className="font-semibold text-text-primary"
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    {balance ? `${parseFloat(balance).toFixed(4)} ETH` : '0.0000 ETH'}
-                  </motion.p>
-                )}
-              </div>
-            </div>
-            <motion.button
-              onClick={refreshBalance}
-              disabled={refreshing}
-              className="p-2 hover:bg-neutral-200 rounded-lg transition-colors disabled:opacity-50 touch-manipulation"
-              title="Refresh balance"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <RefreshCw className={`w-4 h-4 text-text-secondary ${refreshing ? 'animate-spin' : ''}`} />
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Error Display */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              className="bg-error/10 dark:bg-error/20 border border-error/20 dark:border-error/30 rounded-xl p-4"
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-error flex-shrink-0" />
-                <p className="text-error text-sm">{error}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-error/10 border border-error/20 rounded-xl p-4 mt-4 flex items-center gap-3"
+              >
+                <AlertCircle className="w-5 h-5 text-error" />
+                <Text small type="error">
+                  {balanceError}
+                </Text>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card.Content>
+      </Card>
     </motion.div>
   );
 };
